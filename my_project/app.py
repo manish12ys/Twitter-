@@ -10,7 +10,8 @@ def get_video_info(url):
         info = ydl.extract_info(url, download=False)
     return info
 
-@app.route('/')
+@app.route('/', methods=['POST'])  # Bind to POST method
+
 def index():
     return render_template('index.html')
 
