@@ -1,0 +1,13 @@
+component:
+  name: twitter-video-downloader
+  runtime: python
+  source:
+    root: /
+  build:
+    commands:
+      - pip install -r requirements.txt
+  deploy:
+    env:
+      - name: PORT
+        value: "9443"
+    run: python app.py
