@@ -1,36 +1,42 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, request, jsonify, send_from_directory
 import yt_dlp
 import os
 
 app = Flask(__name__)
 
-def get_video_info(url):
-    ydl_opts = {"quiet": True, "extract_flat": False, "noplaylist": True}
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=False)
-    return info
+DOWNLOAD_FOLDER = "downloads"
+os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)  # Ensure the folder exists
 
-@app.route('/', methods=['POST'])  # Bind to POST method
+@app.route("/download", methods=["POST"])
+def download_video():
+    data = request.get_json()
+    video_url = data.get("url")
 
-def index():
-    return render_template('index.html')
+    if not video_url:
+        return jsonify({"error": "No URL provided"}), 400
 
-@app.route('/preview', methods=['POST'])
-def preview():
-    url = request.form.get('url')
-    if not url:
-        return redirect(url_for('index'))
-    
+    output_path = os.path.join(DOWNLOAD_FOLDER, "video.%(ext)s")
+
+    ydl_opts = {
+        "outtmpl": output_path,
+        "format": "best"
+    }
+
     try:
-        info = get_video_info(url)
-        video_url = info['url']
-        thumbnail = info['thumbnail']
-        title = info['title']       
-        
-        return render_template('preview.html', video_url=video_url, thumbnail=thumbnail, title=title)
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([video_url])
+
+        # Find the downloaded file
+        downloaded_file = next(f for f in os.listdir(DOWNLOAD_FOLDER) if f.startswith("video"))
+
+        return jsonify({"file": f"/downloads/{downloaded_file}"})
+    
     except Exception as e:
-        return f"Error: {str(e)}"
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/downloads/<filename>")
+def serve_file(filename):
+    return send_from_directory(DOWNLOAD_FOLDER, filename)
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 5000))  # Use Render's assigned port
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
