@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for
 import yt_dlp
-
+import os
 
 app = Flask(__name__)
 
@@ -30,5 +30,6 @@ def preview():
     except Exception as e:
         return f"Error: {str(e)}"
 
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    port = int(os.getenv("PORT", 5000))  # Use Render's assigned port
+    app.run(host="0.0.0.0", port=port, debug=True)
