@@ -1,7 +1,7 @@
-# Use an official Python image as the base
+# Use an official Python runtime as base image
 FROM python:3.10
 
-# Set the working directory inside the container
+# Set the working directory
 WORKDIR /app
 
 # Copy the application files
@@ -10,15 +10,8 @@ COPY . .
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy WSO2 configuration
-COPY wso2.yaml /etc/wso2/wso2.yaml
+# Expose the port Flask runs on
+EXPOSE 5000
 
-# Expose the API port
-EXPOSE 9443
-
-# Start the Flask app
+# Define the command to run the app
 CMD ["python", "app.py"]
-
-CMD gunicorn -w 4 -b 0.0.0.0:5000 app:app
-
-
